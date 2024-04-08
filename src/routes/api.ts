@@ -49,7 +49,7 @@ export class API extends Common {
         var router = express.Router();
         var bpmnServer = this.bpmnServer;
 
-        router.get('/datastore/findItems', loggedIn, awaitAppDelegateFactory(async (request, response) => {
+        router.post('/datastore/findItems', loggedIn, awaitAppDelegateFactory(async (request, response) => {
 
             //console.log(request.body);
             let query;
@@ -67,15 +67,15 @@ export class API extends Common {
             }
             catch (exc) {
                 errors = exc.toString();
-                //console.log(errors);
+                console.log(errors);
             }
             response.json({ errors: errors, items });
         }));
 
-        router.get('/datastore/findInstances', loggedIn, awaitAppDelegateFactory(async (request, response) => {
+        router.post('/datastore/findInstances', loggedIn, awaitAppDelegateFactory(async (request, response) => {
 
 
-            //console.log(request.body);
+            console.log(request.body);
             let query;
             if (request.body.query) {
                 query = request.body.query;
@@ -94,6 +94,349 @@ export class API extends Common {
                 console.log(errors);
             }
             response.json({ errors: errors, instances });
+        }));
+        router.post('/datastore/changeApplicant', loggedIn, awaitAppDelegateFactory(async(request, response) => {
+            console.log(request.body);
+            let query;
+            if (request.body.query) {
+                query = request.body.query;
+            }
+            else
+                query = request.body;
+            
+            console.log(query);            
+            let errors;
+            try {
+                let instances = await this.bpmnServer.dataStore.findInstances(query, "summary");                
+                console.log(instances.length);
+                if (instances.length > 0) {   
+                    //instances[0].data.applicant_ = request.body.applicant;                 
+                    instances[0].items.forEach(item => {
+                        if (item.id == query["items.id"]) {
+                            item.vars.outMessage.users.applicant = request.body.applicant;
+                            instances[0].logs = [];
+                            instances[0].data.cur_applicant = request.body.applicant;
+                            this.bpmnServer.dataStore.save(instances[0]);
+                            console.log("success to update applicant: ", request.body.applicant);
+                        }
+                    })
+                }
+            }
+            catch (exc) {
+                errors = exc.toString();
+                console.log(errors);
+            }
+            response.json({ errors: errors});
+        }));
+        
+        
+        router.post('/datastore/addInstanceViewers', loggedIn, awaitAppDelegateFactory(async(request, response) => {
+            console.log(request.body);
+            let query;
+            if (request.body.query) {
+                query = request.body.query;
+            }
+            else
+                query = request.body;
+            
+            console.log(query);            
+            let errors;
+            try {
+                let instances = await this.bpmnServer.dataStore.findInstances(query, "summary");                
+                console.log(instances.length);
+                if (instances.length > 0) {   
+                    let instance = instances[0];                 
+                    instance.logs = [];
+                    if (!instance.data.viewers_) {
+                        instance.data.viewers_ = [];
+                    }
+                    instance.data.viewers_ = instance.data.viewers_.concat(request.body.viewers);
+                    this.bpmnServer.dataStore.save(instance);
+                    console.log("success to update addInstanceViewers: ", request.body.viewers);
+                    console.log("success to update addInstanceViewers: ", instance.data.viewers_);
+                }
+            }
+            catch (exc) {
+                errors = exc.toString();
+                console.log(errors);
+            }
+            response.json({ errors: errors});
+        }));
+        
+        router.post('/datastore/removeInstanceViewers', loggedIn, awaitAppDelegateFactory(async(request, response) => {
+            console.log(request.body);
+            let query;
+            if (request.body.query) {
+                query = request.body.query;
+            }
+            else
+                query = request.body;
+            
+            console.log(query);            
+            let errors;
+            try {
+                let instances = await this.bpmnServer.dataStore.findInstances(query, "summary");                
+                console.log(instances.length);
+                if (instances.length > 0) {   
+                    let instance = instances[0];                 
+                    instance.logs = [];
+                    if (instance.data.viewers_) {
+                        instance.data.viewers_ = instance.data.viewers_.filter(it => !request.body.viewers.includes(it));
+                        this.bpmnServer.dataStore.save(instance);
+                    }
+                    console.log("success to update removeInstanceViewers: ", request.body.viewers);
+                }
+            }
+            catch (exc) {
+                errors = exc.toString();
+                console.log(errors);
+            }
+            response.json({ errors: errors});
+        }));
+        
+        router.post('/datastore/userQuit', loggedIn, awaitAppDelegateFactory(async(request, response) => {
+            console.log(request.body);
+            let query;
+            if (request.body.query) {
+                query = request.body.query;
+            }
+            else
+                query = request.body;
+            
+            console.log(query);            
+            let errors;
+            try {
+                let instances = await this.bpmnServer.dataStore.findInstances(query, "summary");                
+                console.log(instances.length);
+                if (instances.length > 0) {   
+                    let instance = instances[0];                 
+                    instance.logs = [];
+                    if (!instance.data.quitTime_) {
+                        instance.data.quitTime_ = [];
+                    }
+                    let time = Math.floor(Date.now() / 1000);
+                    instance.data.quitTime_.push({userId:request.body.userId, time});
+                    this.bpmnServer.dataStore.save(instance);
+                    console.log("success to update userQuit: ", request.body.userId);
+                }
+            }
+            catch (exc) {
+                errors = exc.toString();
+                console.log(errors);
+            }
+            response.json({ errors: errors});
+        }));
+               
+        
+        router.post('/datastore/userJoin', loggedIn, awaitAppDelegateFactory(async(request, response) => {
+            console.log(request.body);
+            let query;
+            if (request.body.query) {
+                query = request.body.query;
+            }
+            else
+                query = request.body;
+            
+            console.log(query);            
+            let errors;
+            try {
+                let instances = await this.bpmnServer.dataStore.findInstances(query, "summary");                
+                console.log(instances.length);
+                if (instances.length > 0) {   
+                    let instance = instances[0];                 
+                    instance.logs = [];
+                    if (instance.data.quitTime_) {
+                        instance.data.quitTime_ = instance.data.quitTime_.filter(it => request.body.userId != it.userId);
+                        this.bpmnServer.dataStore.save(instance);
+                        console.log("success to update userJoin, cur quit users: ", instance.data.quitTime_);
+                    }
+                    console.log("success to update userJoin: ", request.body.userId);
+                }
+            }
+            catch (exc) {
+                errors = exc.toString();
+                console.log(errors);
+            }
+            response.json({ errors: errors});
+        }));
+        
+        router.post('/datastore/offlineReadMessageTime', loggedIn, awaitAppDelegateFactory(async(request, response) => {
+            console.log(request.body);
+            let query;
+            if (request.body.query) {
+                query = request.body.query;
+            }
+            else
+                query = request.body;
+            
+            console.log(query);            
+            let errors;
+            try {
+                let instances = await this.bpmnServer.dataStore.findInstances(query, "summary");                
+                console.log(instances.length);
+                if (instances.length > 0) {   
+                    let instance = instances[0];                 
+                    instance.logs = [];
+                    if (!instance.data.offlineReadMessageTime) {
+                        instance.data.offlineReadMessageTime = [];
+                    }
+                    let i = 0;
+                    for(; i<instance.data.offlineReadMessageTime.length; i++) {
+                        if (instance.data.offlineReadMessageTime[i].userId == request.body.userId) {
+                            instance.data.offlineReadMessageTime[i].time = request.body.time;
+                        }
+                    }                    
+                    if (i == instance.data.offlineReadMessageTime.length) {
+                        instance.data.offlineReadMessageTime.push({userId:request.body.userId, time:request.body.time});
+                    }
+                    this.bpmnServer.dataStore.save(instance);
+                    console.log("success to update offlineReadMessageTime: ", request.body.userId);
+                }
+            }
+            catch (exc) {
+                errors = exc.toString();
+                console.log(errors);
+            }
+            response.json({ errors: errors});
+        }));
+
+        router.post('/datastore/ignoreWorkflow', loggedIn, awaitAppDelegateFactory(async(request, response) => {
+            console.log(request.body);
+            let query;
+            if (request.body.query) {
+                query = request.body.query;
+            }
+            else
+                query = request.body;
+            
+            console.log(query);            
+            let errors;
+            try {
+                let instances = await this.bpmnServer.dataStore.findInstances(query, "summary");                
+                console.log(instances.length);
+                if (instances.length > 0) {   
+                    let instance = instances[0];                 
+                    instance.logs = [];
+                    if (!instance.data.ignoreMessageNoticeUsers) {
+                        instance.data.ignoreMessageNoticeUsers = [];
+                        console.log("add a array: ");
+                    }
+                    instance.data.ignoreMessageNoticeUsers.push(request.body.applicant);
+                    this.bpmnServer.dataStore.save(instance);
+                    console.log("success to ignore: ", request.body.applicant);
+                }
+            }
+            catch (exc) {
+                errors = exc.toString();
+                console.log(errors);
+            }
+            response.json({ errors: errors});
+        }));
+
+        router.post('/datastore/unignoreWorkflow', loggedIn, awaitAppDelegateFactory(async(request, response) => {
+            console.log(request.body);
+            let query;
+            if (request.body.query) {
+                query = request.body.query;
+            }
+            else
+                query = request.body;
+            
+            console.log(query);            
+            let errors;
+            try {
+                let instances = await this.bpmnServer.dataStore.findInstances(query, "summary");                
+                console.log(instances.length);
+                if (instances.length > 0) {   
+                    let instance = instances[0];                 
+                    instance.logs = [];
+                    if (instance.data.ignoreMessageNoticeUsers) {
+                        instance.data.ignoreMessageNoticeUsers = instance.data.ignoreMessageNoticeUsers.filter(it => it != request.body.applicant);
+                    }
+                    this.bpmnServer.dataStore.save(instance);
+                    console.log("success to unignore: ", request.body.applicant);
+                }
+            }
+            catch (exc) {
+                errors = exc.toString();
+                console.log(errors);
+            }
+            response.json({ errors: errors});
+        }));
+
+        router.post('/datastore/freezeWorkflow', loggedIn, awaitAppDelegateFactory(async(request, response) => {
+            console.log(request.body);
+            let query;
+            if (request.body.query) {
+                query = request.body.query;
+            }
+            else
+                query = request.body;
+            
+            console.log(query);            
+            let errors;
+            try {
+                let instances = await this.bpmnServer.dataStore.findInstances(query, "summary");                
+                console.log("find instance number: ", instances.length);
+                if (instances.length > 0) {   
+                    let instance = instances[0];                 
+                    instance.logs = [];
+                    instance.data.isFrozen = true;                    
+                    if (instance.items.length > 0) {
+                        instance.items[instance.items.length - 1].vars.status = "已冻结";
+                        for (let i = instance.items.length - 1; i >= 0; i--) {
+                            if (instance.items[i].vars.mode == "business") {
+                                instance.items[i].vars.status = "已冻结";
+                                break;
+                            }
+                        }
+                    }
+                    this.bpmnServer.dataStore.save(instance);
+                    console.log("success to freeze instance: ", instance.id);
+                }
+            }
+            catch (exc) {
+                errors = exc.toString();
+                console.log(errors);
+            }
+            response.json({ errors: errors});
+        }));
+        router.post('/datastore/unfreezeWorkflow', loggedIn, awaitAppDelegateFactory(async(request, response) => {
+            console.log(request.body);
+            let query;
+            if (request.body.query) {
+                query = request.body.query;
+            }
+            else
+                query = request.body;
+            
+            console.log(query);            
+            let errors;
+            try {
+                let instances = await this.bpmnServer.dataStore.findInstances(query, "summary");                
+                console.log("find instance number: ", instances.length);
+                if (instances.length > 0) {   
+                    let instance = instances[0];                 
+                    instance.logs = [];
+                    instance.data.isFrozen = false;
+                    if (instance.items.length > 0) {
+                        instance.items[instance.items.length - 1].vars.status = "已关闭";
+                        for (let i = instance.items.length - 1; i >= 0; i--) {
+                            if (instance.items[i].vars.mode == "business") {
+                                instance.items[i].vars.status = "已关闭";
+                                break;
+                            }
+                        }
+                    }
+                    this.bpmnServer.dataStore.save(instance);
+                    console.log("success to unfreeze instance: ", instance.id);
+                }
+            }
+            catch (exc) {
+                errors = exc.toString();
+                console.log(errors);
+            }
+            response.json({ errors: errors});
         }));
         /*
         returns list of current instances running or ended

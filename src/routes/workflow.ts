@@ -134,6 +134,27 @@ export class Workflow extends Common {
 
             response.redirect('/instanceDetails?id=' + instance.id);
         }));
+        
+        router.post('/execute_only', awaitAppDelegateFactory(async(request, response) => {
+            let process = request.body.processName;
+            request.session.processName = process;
+            let data = request.body.data;
+            ViewHelper.parseField(request.body.field1, request.body.value1, data);
+            ViewHelper.parseField(request.body.field2, request.body.value2, data);
+            let startNodeId = null;
+            if ("startNodeId" in request.body) {
+                startNodeId = request.body.startNodeId;
+            }
+            console.log("data: ", data)
+            data['caseId'] = caseId++;
+            let context = await bpmnServer.engine.start(process, data,getSecureUser(request),  {startNodeId});
+            if (context.errors) {
+                displayError(response, context.errors);
+            }
+            let instance = context.execution;
+            response.json({instanceId:instance.id});
+        }));
+
 
         router.get('/listDefinitions', function (req, res) {
             let output = ['Data Reset'];
@@ -195,13 +216,22 @@ export class Workflow extends Common {
             let data = {};
             
             Object.entries(request.body).forEach(entry => {
-                if (entry[0] == 'itemId') { }
-                else {
+               // if (entry[0] == 'itemId') { }
+               // else {
                     data[entry[0]] = entry[1];
-                }
+                //}
             });
 
+            console.log("invokeitem, data: ", data)
             try {
+                let instances = await bpmnServer.dataStore.findInstances({"items.id": id}, "summary");                
+                console.log(instances.length);
+                if (instances.length > 0) {   
+                    let instance = instances[0];                 
+                    instance.logs = [];
+                    instance.data.input = Object.assign({}, data);                  
+                    bpmnServer.dataStore.save(instance);                
+                }
 
                 let result = await bpmnAPI.engine.invoke({ "items.id": id }, data, getSecureUser(request));
 
@@ -304,7 +334,15 @@ export class Workflow extends Common {
             await instanceDetails(response, imageId);
 
         }));
-
+        router.get('/instanceDetail', awaitAppDelegateFactory(async(request, response) => {
+            let imageId = request.query.id;
+            console.log("instanceDetail id: " + imageId);
+            await instanceDetail(response, imageId);
+        }));
+        router.get('/instanceSimple', awaitAppDelegateFactory(async(request, response) =>  {
+            let imageId = request.query.id;
+            await instanceSimple(response, imageId);
+        }));
         router.get('/deleteInstance', deleteInstance);
         router.get('/shutdown', shutdown);
         router.get('/restart', restart);
@@ -504,7 +542,16 @@ async function display(req,res, title, output, logs = [], items = []) {
 function show(output) {
     return output;
 }
-async function instanceDetails(response,instanceId) {
+async function instanceDetail(response, instanceId) {
+    await instanceDetailInfo(response, instanceId, "jsondata");
+}
+async function instanceDetails(response, instanceId) {
+    await instanceDetailInfo(response, instanceId, "");
+}
+async function instanceSimple(response, instanceId) {
+    await instanceDetailInfo(response, instanceId, "simple");
+}
+async function instanceDetailInfo(response, instanceId, mode) { 
 
     let instance = await bpmnServer.dataStore.findInstance({ id: instanceId }, 'Full');
 
@@ -531,7 +578,15 @@ async function instanceDetails(response,instanceId) {
 
     let decorations = JSON.stringify(ViewHelper.calculateDecorations(instance.items));
 
-    response.render('InstanceDetails',
+    if (mode == "jsondata") {
+        response.json({
+            instance,
+            accessRules: def.accessRules,
+            //svg, decorations, definition: defJson,
+        });
+    }
+    else {        
+        response.render('InstanceDetails',
         {
             instance, vars,
             accessRules: def.accessRules,
@@ -539,7 +594,7 @@ async function instanceDetails(response,instanceId) {
             logs,items: instance.items, svg,
             decorations, definition: defJson, lastItem,
         });
-
+    }
 }
 export class ViewHelper {
 

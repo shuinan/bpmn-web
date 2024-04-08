@@ -1,0 +1,51 @@
+extends layoutSimple
+
+block content
+
+		
+	//div(style="border-bottom: 1px solid #999;padding-bottom: 10px;overflow: hidden;")
+
+		//h1(style="float:left;")
+			span #{title}
+
+		//span(id='Details-block',font-size='10px')
+		
+	script(type="text/javascript").
+		var jsonData=!{definition};	
+		var decorations= !{decorations};	
+	script(type="text/javascript").
+		$(document).ready(function() {
+		  var lines= $('#logs').find('table').find('tr').find('td');
+		  lines.each(function(index) {
+			  if ($(this).text().startsWith('debug:')) {
+				$(this).css("color", "green");
+				}
+			  if ($(this).text().startsWith('log:Action:')) {
+				$(this).css("font-weight", "bold");
+				$(this).css("font-size", "14px");
+				}
+			}); // end each
+		  }); // end ready
+				
+	h4 工作流信息
+	- let lastAt = (lastItem.endedAt) ? lastItem.endedAt : lastItem.startedAt;
+	table
+		tr 
+			td 名字:
+			td  #{instance.name}
+		tr
+			td 开始时间:
+			td(class='startDate') #{instance.startedAt}
+		tr
+			td 结束时间:
+			td #{instance.endedAt}
+		tr
+			td 最后执行的时间
+			td #{lastAt} 
+		tr
+			td 最后执行的节点
+			td #{lastItem.name}
+			td 状态
+			td #{lastItem.status}
+				
+	div!= svg

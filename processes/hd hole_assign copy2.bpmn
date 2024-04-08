@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="sample-diagram" targetNamespace="http://bpmn.io/schema/bpmn" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd">
+  <bpmn2:collaboration id="Collaboration_0836vd2">
+    <bpmn2:participant id="Participant_1ta8xo0" processRef="Process_1" />
+  </bpmn2:collaboration>
+  <bpmn2:process id="Process_1" isExecutable="false">
+    <bpmn2:userTask id="Activity_1xqwq6b" name="主管指派">
+      <bpmn2:extensionElements>
+        <camunda:executionListener event="start">
+          <camunda:script scriptFormat="JavaScript">console.log("cur data is: ", data);
+          if (data.loopKey !== undefined) {
+            this.token.execution.instance.data.loopKey = data.loopKey;
+          }
+          data = this.token.execution.instance.data;
+          this.token.execution.appDelegate.collService().assign_method(item, data, "8", "handleWork", data.result);
+          return;
+          
+          console.log("data: ", data);
+          item.vars.inMessage = data;
+          item.vars.mode = "business";
+          item.vars.status = this.token.execution.appDelegate.collService().getItemStatus(5, Number(data.result));
+          let userId = data.senderId
+          //data.users = JSON.parse(data.users);
+          let worker = data.users.workers[0];
+          let groupId = data.groupId
+          let applicant = data.users.applicant;          
+          //this.token.execution.appDelegate.collService().saveUsers({worker:[userId], leader:[userId]});
+          let desc = data.desc;
+          //desc.illustrate = "请实施开孔任务";
+          desc.resource.workflowItemId = item.id;
+          let time = Math.floor(Date.now() / 1000);
+          let users={workers:[worker], leaders:[userId], applicant}          
+          item.vars.outMessage = {itemId:this.id, time, method:"handleWork",type:"8",result:data.result,groupId,receiverId:worker,senderId:userId,priority:data.priority,users,desc }
+          let msgText = JSON.stringify(item.vars.outMessage)          
+          let message={sendid:userId,targetid:groupId,workflowItemId:item.id,msgType:101,time,clientType:0,content:[{msgText}]}
+          console.log("message is:", JSON.stringify(message));
+          this.token.execution.appDelegate.collService().sendMessage("0",groupId,JSON.stringify(message));</camunda:script>
+        </camunda:executionListener>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_1g0hlc5</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_0biq2cg</bpmn2:outgoing>
+      <bpmn2:outgoing>Flow_0dm473g</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:userTask id="Activity_15729s5" name="求指派">
+      <bpmn2:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="from" />
+          <camunda:inputParameter name="to" />
+          <camunda:inputParameter name="message" />
+        </camunda:inputOutput>
+        <camunda:taskListener class="" event="create" />
+        <camunda:executionListener event="start">
+          <camunda:script scriptFormat="JavaScript">this.token.execution.appDelegate.collService().askfor_method(item, data, data.result);
+          return;
+          
+          console.log("data: ", data)          
+          let userId = data.senderId
+          //data.users = JSON.parse(data.users);
+          let leader = data.users.leaders[0]
+          let groupId = data.groupId
+
+          item.vars.inMessage = data;
+          item.vars.mode = "business";          
+          // WorkflowType_Askfor  WorkflowResult_Resolve
+          item.vars.status = this.token.execution.appDelegate.collService().getItemStatus(4, 3);
+
+          console.log("data.desc: ", data.desc)
+          //data.desc = JSON.parse(data.desc);
+          let desc = data.desc;
+          console.log("data.desc", desc)
+          //desc.illustrate = "请安排人实施开孔";
+          desc.resource.workflowItemId = item.id;
+          let time = Math.floor(Date.now() / 1000);
+          let users = {applicant:userId, leaders:[leader]}
+          item.vars.outMessage = {itemId:this.id, time, method:"assignWorker", type:"5",result:"3",groupId,receiverId:leader,senderId:userId,priority:data.priority,users,desc};
+          let msgText = JSON.stringify(item.vars.outMessage)          
+          let message={sendid:userId,workflowItemId:item.id,targetid:groupId,msgType:101,time,clientType:0,content:[{msgText}]}
+          console.log("message is:", JSON.stringify(message));
+
+          this.token.execution.appDelegate.collService().sendMessage("0",groupId,JSON.stringify(message));</camunda:script>
+        </camunda:executionListener>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_18yyra7</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_1g0hlc5</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:sequenceFlow id="Flow_1xu4j5a" sourceRef="Activity_1qed2em" targetRef="Gateway_0tle6uq" />
+    <bpmn2:sequenceFlow id="Flow_1g0hlc5" sourceRef="Activity_15729s5" targetRef="Activity_1xqwq6b">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression" language="JavaScript">this.data.result == "3"</bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="Flow_1i60t57" sourceRef="StartEvent_1" targetRef="Activity_0wc88mk" />
+    <bpmn2:sequenceFlow id="Flow_1n3dgeo" sourceRef="Activity_1rbhi04" targetRef="Activity_18perkk" />
+    <bpmn2:sequenceFlow id="Flow_0biq2cg" sourceRef="Activity_1xqwq6b" targetRef="Activity_1qed2em">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression" language="JavaScript">this.data.result == "3"</bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="Flow_18yyra7" sourceRef="Activity_0wc88mk" targetRef="Activity_15729s5">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression" language="">this.data.result == "3"</bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:startEvent id="StartEvent_1">
+      <bpmn2:outgoing>Flow_1i60t57</bpmn2:outgoing>
+    </bpmn2:startEvent>
+    <bpmn2:sequenceFlow id="Flow_0aav87x" name="重新打开" sourceRef="Gateway_0kt06x8" targetRef="Activity_0wc88mk">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression" language="JavaScript">item.data.type == "16"</bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="Flow_0z6m60j" name="结束" sourceRef="Gateway_0kt06x8" targetRef="Event_0rb320g">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression" language="JavaScript">item.data.type != "16"</bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="Flow_0dm473g" name="拒绝" sourceRef="Activity_1xqwq6b" targetRef="Activity_0wc88mk">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression" language="JavaScript">this.data.result == "4"</bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="Flow_1v3om7y" sourceRef="Activity_18perkk" targetRef="Gateway_0kt06x8" />
+    <bpmn2:sequenceFlow id="Flow_1rjyiif" name="关闭" sourceRef="Activity_0wc88mk" targetRef="Activity_18perkk">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression" language="JavaScript">this.data.result == "4"</bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:userTask id="Activity_0wc88mk" name="开孔请求">
+      <bpmn2:extensionElements>
+        <camunda:executionListener event="start">
+          <camunda:script scriptFormat="JavaScript">//WorkflowType.WorkflowType_Assign
+          this.token.execution.appDelegate.collService().startWorkflow_method(item, data, "4", "askforAssign", "3");
+          return;
+          
+          let userId = data.senderId
+            //data.users = JSON.parse(data.users);            
+            let groupId = data.groupId
+
+            // 避免被覆盖   data is instance.data
+            data.applicant_ = userId;
+            data.cur_applicant = userId;
+            data.groupId_ = data.groupId;
+            data.priority_ = data.priority;
+
+            item.vars.inMessage = data;
+            item.vars.mode = "business";          
+            // WorkflowType_Askfor  WorkflowResult_Resolve
+            item.vars.status = this.token.execution.appDelegate.collService().getItemStatus(1, 3);
+            
+            let desc = data.desc;
+            console.log("data.desc", desc)            
+            desc.resource.workflowItemId = item.id;
+            let time = Math.floor(Date.now() / 1000);
+            let users = {applicant:userId}
+            item.vars.outMessage = {itemId:this.id, time, method:"askforAssign", type:"4",result:"3",groupId,receiverId:userId,senderId:userId,priority:data.priority,users,desc};
+            let msgText = JSON.stringify(item.vars.outMessage)          
+            let message={sendid:userId,workflowItemId:item.id,targetid:groupId,msgType:101,time,clientType:0,content:[{msgText}]}
+            console.log("message is:", JSON.stringify(message));
+
+            this.token.execution.appDelegate.collService().sendMessage("0",groupId,JSON.stringify(message));</camunda:script>
+        </camunda:executionListener>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_1i60t57</bpmn2:incoming>
+      <bpmn2:incoming>Flow_0aav87x</bpmn2:incoming>
+      <bpmn2:incoming>Flow_0dm473g</bpmn2:incoming>
+      <bpmn2:incoming>Flow_1yzvgi3</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_18yyra7</bpmn2:outgoing>
+      <bpmn2:outgoing>Flow_1rjyiif</bpmn2:outgoing>
+      <bpmn2:outgoing>Flow_0ca2yd1</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:sequenceFlow id="Flow_0ca2yd1" name="直接指派" sourceRef="Activity_0wc88mk" targetRef="Activity_1qed2em">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression" language="JavaScript">this.data.result == "0"</bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:endEvent id="Event_0rb320g">
+      <bpmn2:incoming>Flow_0z6m60j</bpmn2:incoming>
+      <bpmn2:terminateEventDefinition id="TerminateEventDefinition_0gkw9sa" />
+    </bpmn2:endEvent>
+    <bpmn2:exclusiveGateway id="Gateway_0kt06x8">
+      <bpmn2:incoming>Flow_1v3om7y</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_0aav87x</bpmn2:outgoing>
+      <bpmn2:outgoing>Flow_0z6m60j</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:userTask id="Activity_18perkk" name="重新打开">
+      <bpmn2:extensionElements>
+        <camunda:executionListener event="start">
+          <camunda:script scriptFormat="JavaScript">this.token.execution.appDelegate.collService().reopen_method(item, data);</camunda:script>
+        </camunda:executionListener>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_1n3dgeo</bpmn2:incoming>
+      <bpmn2:incoming>Flow_1rjyiif</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_1v3om7y</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:userTask id="Activity_1rbhi04" name="请求者确认">
+      <bpmn2:extensionElements>
+        <camunda:executionListener event="start">
+          <camunda:script scriptFormat="JavaScript">this.token.execution.appDelegate.collService().applicantConfirm_method(item, data, "16");
+          return;
+
+          item.vars.inMessage = data;
+          item.vars.mode = "business";
+          item.vars.status = this.token.execution.appDelegate.collService().getItemStatus(15, Number(data.result));
+            let userId = data.senderId 
+            let groupId = data.groupId
+            let applicant = data.users.applicant;
+            let users = {applicant}
+            let time = Math.floor(Date.now() / 1000);
+            data.desc.resource.workflowItemId = item.id;
+            item.vars.outMessage = {itemId:this.id, time, method:"endWork", type:"15",groupId,priority:data.priority,users, receiverId:"",senderId:userId,result:data.result, desc:data.desc}
+            let msgText = JSON.stringify(item.vars.outMessage)            
+            let message={sendid:userId,targetid:groupId,workflowItemId:item.id,msgType:101,time,clientType:0,content:[{msgText}]}
+            console.log("message is:", JSON.stringify(message));
+            this.token.execution.appDelegate.collService().sendMessage("0",groupId,JSON.stringify(message));</camunda:script>
+        </camunda:executionListener>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_14t5cwo</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_1n3dgeo</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:exclusiveGateway id="Gateway_0tle6uq">
+      <bpmn2:incoming>Flow_1xu4j5a</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_14t5cwo</bpmn2:outgoing>
+      <bpmn2:outgoing>Flow_1yzvgi3</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:sequenceFlow id="Flow_14t5cwo" sourceRef="Gateway_0tle6uq" targetRef="Activity_1rbhi04">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression" language="JavaScript">this.data.result == "3"</bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:userTask id="Activity_1qed2em" name="处理者反馈">
+      <bpmn2:extensionElements>
+        <camunda:executionListener event="start">
+          <camunda:script scriptFormat="JavaScript">console.log("cur data is: ", data);
+          if (data.loopKey !== undefined) {
+            this.token.execution.instance.data.loopKey = data.loopKey;
+          }
+          data = this.token.execution.instance.data;           
+          this.token.execution.appDelegate.collService().handleWork_method(item, data, "15", "closeWork", data.result);
+          return;
+                    
+          console.log("data: ", data);
+          item.vars.inMessage = data;
+          item.vars.mode = "business";
+          item.vars.status = this.token.execution.appDelegate.collService().getItemStatus(8, Number(data.result));
+            let userId = data.senderId 
+            let groupId = data.groupId
+            //data.users = JSON.parse(data.users);
+            let applicant = data.users.applicant;
+            let users = {applicant, workers:[userId]}
+            let time = Math.floor(Date.now() / 1000);
+            data.desc.resource.workflowItemId = item.id;
+            item.vars.outMessage = {itemId:this.id, time, method:"closeWork", type:"15",groupId,priority:data.priority,users, receiverId:applicant,senderId:userId,result:data.result, desc:data.desc}
+            let msgText = JSON.stringify(item.vars.outMessage)            
+            let message={sendid:userId,targetid:groupId,workflowItemId:item.id,msgType:101,time,clientType:0,content:[{msgText}]}
+            console.log("message is:", JSON.stringify(message));
+            this.token.execution.appDelegate.collService().sendMessage("0",groupId,JSON.stringify(message));</camunda:script>
+        </camunda:executionListener>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_0biq2cg</bpmn2:incoming>
+      <bpmn2:incoming>Flow_0ca2yd1</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_1xu4j5a</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:sequenceFlow id="Flow_1yzvgi3" name="拒绝" sourceRef="Gateway_0tle6uq" targetRef="Activity_0wc88mk">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression" language="JavaScript">this.data.result == "4"</bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+  </bpmn2:process>
+  <bpmn2:message id="Message_1xjp44w" name="msg1" />
+  <bpmn2:message id="Message_1ia8xed" name="confirm1" />
+  <bpmn2:message id="Message_06069yb" name="msg2" />
+  <bpmn2:message id="Message_1ywvuw8" name="confirm2" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0836vd2">
+      <bpmndi:BPMNShape id="Participant_1ta8xo0_di" bpmnElement="Participant_1ta8xo0" isHorizontal="true">
+        <dc:Bounds x="200" y="70" width="1095" height="430" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1yzvgi3_di" bpmnElement="Flow_1yzvgi3">
+        <di:waypoint x="830" y="145" />
+        <di:waypoint x="830" y="100" />
+        <di:waypoint x="427" y="100" />
+        <di:waypoint x="427" y="250" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="619" y="82" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14t5cwo_di" bpmnElement="Flow_14t5cwo">
+        <di:waypoint x="855" y="170" />
+        <di:waypoint x="880" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ca2yd1_di" bpmnElement="Flow_0ca2yd1">
+        <di:waypoint x="450" y="330" />
+        <di:waypoint x="450" y="370" />
+        <di:waypoint x="710" y="370" />
+        <di:waypoint x="710" y="210" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="558" y="352" width="44" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1rjyiif_di" bpmnElement="Flow_1rjyiif">
+        <di:waypoint x="440" y="330" />
+        <di:waypoint x="440" y="400" />
+        <di:waypoint x="1060" y="400" />
+        <di:waypoint x="1060" y="210" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="740" y="382" width="21" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1v3om7y_di" bpmnElement="Flow_1v3om7y">
+        <di:waypoint x="1110" y="170" />
+        <di:waypoint x="1145" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0dm473g_di" bpmnElement="Flow_0dm473g">
+        <di:waypoint x="520" y="170" />
+        <di:waypoint x="440" y="170" />
+        <di:waypoint x="440" y="250" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="470" y="152" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0z6m60j_di" bpmnElement="Flow_0z6m60j">
+        <di:waypoint x="1195" y="170" />
+        <di:waypoint x="1242" y="170" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1205" y="162" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0aav87x_di" bpmnElement="Flow_0aav87x">
+        <di:waypoint x="1170" y="195" />
+        <di:waypoint x="1170" y="430" />
+        <di:waypoint x="420" y="430" />
+        <di:waypoint x="420" y="330" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="774" y="412" width="44" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18yyra7_di" bpmnElement="Flow_18yyra7">
+        <di:waypoint x="470" y="290" />
+        <di:waypoint x="520" y="290" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0biq2cg_di" bpmnElement="Flow_0biq2cg">
+        <di:waypoint x="620" y="170" />
+        <di:waypoint x="660" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1n3dgeo_di" bpmnElement="Flow_1n3dgeo">
+        <di:waypoint x="980" y="170" />
+        <di:waypoint x="1010" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1i60t57_di" bpmnElement="Flow_1i60t57">
+        <di:waypoint x="288" y="290" />
+        <di:waypoint x="370" y="290" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1g0hlc5_di" bpmnElement="Flow_1g0hlc5">
+        <di:waypoint x="570" y="250" />
+        <di:waypoint x="570" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1xu4j5a_di" bpmnElement="Flow_1xu4j5a">
+        <di:waypoint x="760" y="170" />
+        <di:waypoint x="805" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Activity_1iiz49f_di" bpmnElement="Activity_1xqwq6b">
+        <dc:Bounds x="520" y="130" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1h674e6_di" bpmnElement="Activity_15729s5">
+        <dc:Bounds x="520" y="250" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_176h5pp_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="252" y="272" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="259" y="185" width="44" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0vq5kt3_di" bpmnElement="Activity_0wc88mk">
+        <dc:Bounds x="370" y="250" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_121vrkv_di" bpmnElement="Event_0rb320g">
+        <dc:Bounds x="1242" y="152" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="628" y="118" width="43" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0kt06x8_di" bpmnElement="Gateway_0kt06x8" isMarkerVisible="true">
+        <dc:Bounds x="1145" y="145" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0ffrw9f_di" bpmnElement="Activity_18perkk">
+        <dc:Bounds x="1010" y="130" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1kymr5s_di" bpmnElement="Activity_1rbhi04">
+        <dc:Bounds x="880" y="130" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0tle6uq_di" bpmnElement="Gateway_0tle6uq" isMarkerVisible="true">
+        <dc:Bounds x="805" y="145" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0eoc3fu_di" bpmnElement="Activity_1qed2em">
+        <dc:Bounds x="660" y="130" width="100" height="80" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn2:definitions>

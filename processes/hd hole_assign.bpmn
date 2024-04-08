@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="sample-diagram" targetNamespace="http://bpmn.io/schema/bpmn" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd">
+  <bpmn2:collaboration id="Collaboration_0836vd2">
+    <bpmn2:participant id="Participant_1ta8xo0" processRef="Process_1" />
+  </bpmn2:collaboration>
+  <bpmn2:process id="Process_1" isExecutable="false">
+    <bpmn2:endEvent id="Event_0rb320g">
+      <bpmn2:incoming>Flow_1i60t57</bpmn2:incoming>
+      <bpmn2:terminateEventDefinition id="TerminateEventDefinition_0gkw9sa" />
+    </bpmn2:endEvent>
+    <bpmn2:sequenceFlow id="Flow_1i60t57" sourceRef="StartEvent_1" targetRef="Event_0rb320g" />
+    <bpmn2:startEvent id="StartEvent_1">
+      <bpmn2:outgoing>Flow_1i60t57</bpmn2:outgoing>
+    </bpmn2:startEvent>
+  </bpmn2:process>
+  <bpmn2:message id="Message_1xjp44w" name="msg1" />
+  <bpmn2:message id="Message_1ia8xed" name="confirm1" />
+  <bpmn2:message id="Message_06069yb" name="msg2" />
+  <bpmn2:message id="Message_1ywvuw8" name="confirm2" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0836vd2">
+      <bpmndi:BPMNShape id="Participant_1ta8xo0_di" bpmnElement="Participant_1ta8xo0" isHorizontal="true">
+        <dc:Bounds x="200" y="70" width="1000" height="430" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1i60t57_di" bpmnElement="Flow_1i60t57">
+        <di:waypoint x="288" y="290" />
+        <di:waypoint x="675" y="290" />
+        <di:waypoint x="675" y="170" />
+        <di:waypoint x="1062" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_121vrkv_di" bpmnElement="Event_0rb320g">
+        <dc:Bounds x="1062" y="152" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="628" y="118" width="43" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_176h5pp_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="252" y="272" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="259" y="185" width="44" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn2:definitions>
